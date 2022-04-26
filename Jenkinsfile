@@ -1,28 +1,45 @@
-node('master')
-{
-    stage('ContinuousDownload') 
-    {
-         git 'https://github.com/selenium-saikrishna/maven.git'
-    }
-    stage('ContinuousBuild') 
-    {
-         sh label: '', script: 'mvn package'
-    }
-    stage('ContinuousDeployment')
-    {
-        sh label: '', script: 'scp /home/ubuntu/.jenkins/workspace/ScriptedPipeline/webapp/target/webapp.war ubuntu@172.31.12.49:/var/lib/tomcat8/webapps/testenv.war'
-    }
-    stage('ContinuousTesting')
-    {
-        git 'https://github.com/selenium-saikrishna/FunctionalTesting.git'
-        sh label: '', script: 'java -jar /home/ubuntu/.jenkins/workspace/ScriptedPipeline/testing.jar'
-    }
-     stage('ContinuousDelivery')
-    {
-        input message: 'Waiting for Approval from the DM', submitter: 'Srinivas'
-        sh label: '', script: 'scp /home/ubuntu/.jenkins/workspace/ScriptedPipeline/webapp/target/webapp.war ubuntu@172.31.13.206:/var/lib/tomcat8/webapps/prodenv.war'
-    }
-    
-    
+pipeline{
+agent any
+parameters {
+  string defaultValue: 'master', description: 'pls select a branch', name: 'name', trim: true
+  choice choices: ['master', 'develop', 'uat'], description: 'pls select branch', name: 'branch'
+  booleanParam defaultValue: true, description: 'please select deploy', name: 'deploy'
 }
 
+stages{
+stage("SCM"){
+steps{
+script{
+    try{ echo "clone from scm is stsrted"
+git branch: '$branch', credentialsId: 'github', url: 'https://github.com/anandbutra/jenkins.gt'
+echo "clone from scm is completed"   }
+    catch (Exception e)
+    {
+              echo 'Exception occurred: ' + e.toString()
+        mail to: 'anandbutra@gmail.com',
+    subject: "Job '${JOB_NAME}' (${BUILD_NUMBER}) is completed",
+    body: "Success Please go to ${BUILD_URL} and check the buils is success or not" 
+        
+    }
+
+     }
+	 }
+	 }
+	 stage("Build"){
+steps{
+script{
+echo "Build is stsrted"
+sh 'mvn clean package'
+echo "Build is completed"
+     }
+	 }
+	 }
+	  
+	
+	 
+	 
+	 }
+	 }
+	 
+	 
+                                                  
